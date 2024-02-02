@@ -16,22 +16,28 @@ if "exercise_sql_tables.duckdb" not in os.listdir("data"):
 
 con = duckdb.connect(database="data/exercises_sql_table.duckdb", read_only=False)
 
-# solution_df = duckdb.sql(ANSWER_STR).df()
+
 
 with st.sidebar:
+    available_theme_df = con.execute("SELECT DISTINCT theme FROM memory_state").df()
     theme = st.selectbox(
         "what would you like to review?",
-        ("cross_joins", "GroupBy", "window_functions"),
+        available_theme_df["theme"].unique(),
         index=None,
         placeholder="Select a theme...",
     )
-    st.write("You selected:", theme)
+
+    if theme:
+        st.write("You selected:", theme)
+        select_exercise_query = f"SELECT * FROM memory_state where theme = '{theme}'"
+    else:
+        select_exercise_query = "SELECT * FROM memory_state"
 
     exercise = (
-        con.execute(f"SELECT * FROM memory_state where theme = '{theme}'")
+        con.execute(select_exercise_query)
         .df()
         .sort_values("last_reviewed")
-        .reset_index()
+        .reset_index(drop=True)
     )
     st.write(exercise)
 
